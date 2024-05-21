@@ -3,6 +3,7 @@ import axios, {AxiosHeaders, AxiosProgressEvent} from "axios";
 import {useStrapiToken} from "@/strapi-hooks/composables/useStrapiToken";
 import {useStrapiUrl} from "@/strapi-hooks/composables/useStrapiUrl";
 import {useState} from "react";
+import {strapiConfig} from "@/strapi-hooks/config/strapiConfig";
 
 export const useStrapiMedia = () => {
 
@@ -12,7 +13,7 @@ export const useStrapiMedia = () => {
     const {getToken} = useStrapiToken()
     const {adminUrl, userUrl} = useStrapiUrl()
     const getMediaUrl = (path: string) => {
-        const url = process.env.STRAPI_URL ?? 'http://localhost:1337'
+        const url = strapiConfig.url ?? 'http://localhost:1337'
         return joinURL(url, path)
     }
 

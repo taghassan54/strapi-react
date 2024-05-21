@@ -1,6 +1,7 @@
 import { useRuntimeConfig } from '#imports'
+import {strapiConfig} from "@/strapi-hooks/config/strapiConfig";
 
 export const useStrapiVersion = (): string => {
 
-  return  process.env.STRAPI_VERSION??"v4"
+  return  strapiConfig.version??"v4"
 }

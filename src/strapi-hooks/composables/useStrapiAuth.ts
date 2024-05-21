@@ -20,12 +20,12 @@ export interface AuthOptions {
 }
 export const useStrapiAuth = () => {
     const {userUrl,adminUrl} = useStrapiUrl()
-    let {getToken:token,setToken} = useStrapiToken()
+    let {getToken,setToken} = useStrapiToken()
     const {user,setCurrentUser,getUser} = useStrapiUser()
     const client = useStrapiClient()
 
     const fetchUser = async (): Promise<StrapiUser> => {
-
+const token=getToken()
         if (token) {
             try {
                const apiUser:StrapiUser = await client('/users/me',{ method:"get" } )
@@ -43,7 +43,7 @@ export const useStrapiAuth = () => {
     }
 
     const fetchAdmin = async (): Promise<StrapiUser> => {
-
+        const token=getToken()
         if (token) {
             try {
                const apiUser:StrapiAdminUser = await client('/admin/users/me',{ method:"get" } ,true)
@@ -236,6 +236,17 @@ export const useStrapiAuth = () => {
         }
     }
 
+    const renewToken =async ()=>{
+        const token=getToken()
+        const response = await client('/admin/renew-token', { method: 'post', data: {
+                token:token
+            } },true)
+        
+        console.log('====================================');
+        console.log(response);
+        console.log('====================================');
+    }
+
     return {
         setToken,
         setCurrentUser,
@@ -250,6 +261,7 @@ export const useStrapiAuth = () => {
         sendEmailConfirmation,
         getProviderAuthenticationUrl,
         authenticateProvider,
-        adminLogin
+        adminLogin,
+        renewToken
     }
 }

@@ -1,12 +1,13 @@
 import Cookies from 'js-cookie';
+import {strapiConfig} from "@/strapi-hooks/config/strapiConfig";
 
 export const useStrapiToken = () => {
     const getToken = (): string | null => {
-        const token = Cookies.get(`${process.env.STRAPI_COOKIENAME ?? 'strapi_jwt'}`)
+        const token = Cookies.get(`${strapiConfig.cookieName ?? 'strapi_jwt'}`)
         return token === null || token === "null" ?   null:token;
     }
     const setToken = (token: string | null) => {
-        Cookies.set(`${process.env.STRAPI_COOKIENAME ?? 'strapi_jwt'}`, token)
+        Cookies.set(`${strapiConfig.cookieName ?? 'strapi_jwt'}`, token)
     }
     return {
         getToken,
