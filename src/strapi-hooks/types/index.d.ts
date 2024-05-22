@@ -556,6 +556,12 @@ export interface StrapiAuthenticationResponse {
     jwt: string
 }
 
+// export interface StrapiAdminAuthenticationResponse {
+//     user: React.MutableRefObject<StrapiAdminUser>
+//     token: string
+// }
+
+
 export interface StrapiAdminAuthenticationData {
     email: string
     password: string

@@ -5,12 +5,13 @@ import React, {FormEvent, useState} from "react";
 import axios, {AxiosHeaders} from "axios";
 import {useStrapiToken} from "@/strapi-hooks/composables/useStrapiToken";
 import {useStrapiMedia} from "@/strapi-hooks/composables/useStrapiMedia";
+import {useStrapiUser} from "@/strapi-hooks/composables/useStrapiUser";
 
 export default function Home() {
     const num = 55
     const {find, findOne, create} = useStrapi()
-    const {register, login, adminLogin, renewToken} = useStrapiAuth()
-
+    const {register, login, adminLogin, renewToken,} = useStrapiAuth()
+    const {user,  getUser} = useStrapiUser()
     const {
         uploadSingleMedia,
         uploadMultipleMedia,
@@ -18,7 +19,8 @@ export default function Home() {
         setSelectedFiles,
         selectedFile,
         setSelectedFile,
-        getMediaUrl
+        getMediaUrl,
+        updateFileInfo
     } = useStrapiMedia()
     const {getToken} = useStrapiToken()
 
@@ -54,11 +56,7 @@ export default function Home() {
         console.log("user", user);
         console.log('====================================');
 
-        await create('transactions', {
-            uuid: '0320ec48-8a77-49cf-9cd7-02c21ac25031',
-            amount: 4590,
-            description: 'description'
-        })
+
         const transactions = await find('transactions', {populate: '*'})
         const transaction = await findOne('transactions', 1, {populate: '*'})
         console.log('====================================');
@@ -97,7 +95,7 @@ export default function Home() {
             <div style={{height: 40}}></div>
             <h1>File Upload Single</h1>
             <input type="file" onChange={handleSingleFileChange}/>
-            <button onClick={handleSingleUpload}>Upload</button>
+            <button onClick={handleSingleUpload}>Upload Single</button>
 
             {uploadProgress > 0 && <p>Upload Progress: {uploadProgress}%</p>}
             {uploadError && <p style={{color: 'red'}}>Error: {uploadError}</p>}
@@ -131,9 +129,9 @@ export default function Home() {
             <br/>
             <button onClick={async () => {
                 const files = await find('upload/files')
-                const file = await findOne('upload/files',2)
+                const file = await findOne('upload/files', 2)
 
-                if(files){
+                if (files) {
                     console.log(file)
                     console.log('====================================');
                     console.log(getMediaUrl(files[0].url));
@@ -142,8 +140,77 @@ export default function Home() {
             }}>files
             </button>
             <br/>
+
             <br/>
-            <button onClick={renewToken}>
+
+            <button onClick={async (e) => {
+
+
+                e.preventDefault();
+
+                try {
+
+                    if (selectedFiles.length === 0) {
+                        throw 'Please select at least one file.';
+                    }
+
+                    const data = {
+                        uuid: '0320ec48-8a77-49cf-9cd7-02c21ac25031',
+                        amount: 4590,
+                        description: 'description'
+                    };
+
+
+                    // uploadSingleMedia(formData)
+
+                    const token = getToken()
+                    const response = await create('transactions', data)
+
+                    if (response && response.data) {
+                        // await uploadSingleMedia(undefined, {
+                        //     field: 'receipt',
+                        //     refId: response.data.id,
+                        //     ref: 'api::transaction.transaction'
+                        // })
+                        await uploadMultipleMedia(undefined, {
+                            field: 'receipt',
+                            refId: response.data.id,
+                            ref: 'api::transaction.transaction',
+                            path: 'transactions',
+                        })
+                    }
+
+                } catch (e) {
+                    alert(e.toString())
+                }
+
+            }}>add transaction
+            </button>
+
+            <br/>
+            <br/>
+            <button onClick={async (e) => {
+
+                const response = await updateFileInfo({fileId: 2});
+
+
+            }}> update file
+            </button>
+            <br/>
+
+            <br/>
+            <button onClick={async () => {
+                const response = await find("admin/api-tokens", undefined,undefined,true)
+
+                console.log('====================================');
+                console.log("response",response.data[0].id);
+               const regenerate =await create('admin/api-tokens/1/regenerate',{},undefined,true)
+                // console.log("response",await getUser());
+              const permissions =await find('admin/content-api/permissions',undefined,undefined,true)
+                console.log("regenerate",regenerate)
+                console.log("permissions",permissions)
+                console.log('====================================');
+            }}>
                 Click me
             </button>
         </div>

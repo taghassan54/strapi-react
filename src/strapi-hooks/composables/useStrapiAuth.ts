@@ -1,5 +1,5 @@
 import {useStrapiUrl} from "@/strapi-hooks/composables/useStrapiUrl";
-import { useStrapiToken} from "@/strapi-hooks/composables/useStrapiToken";
+import {useStrapiToken} from "@/strapi-hooks/composables/useStrapiToken";
 import {useStrapiClient} from "@/strapi-hooks/composables/useStrapiClient";
 import {useStrapiUser} from "@/strapi-hooks/composables/useStrapiUser";
 import {
@@ -14,23 +14,26 @@ import {
     StrapiResetPasswordData,
     StrapiUser
 } from "@/strapi-hooks/types";
+import React from "react";
+
 export interface AuthOptions {
     populate?: string | string[]
     fields?: string | string[]
 }
+
 export const useStrapiAuth = () => {
-    const {userUrl,adminUrl} = useStrapiUrl()
-    let {getToken,setToken} = useStrapiToken()
-    const {user,setCurrentUser,getUser} = useStrapiUser()
+    const {userUrl, adminUrl} = useStrapiUrl()
+    let {getToken, setToken} = useStrapiToken()
+    const {user, setCurrentUser, getUser} = useStrapiUser()
     const client = useStrapiClient()
 
-    const fetchUser = async (): Promise<StrapiUser> => {
-const token=getToken()
+    const fetchUser = async (): Promise<React.MutableRefObject<StrapiUser>> => {
+        const token = getToken()
         if (token) {
             try {
-               const apiUser:StrapiUser = await client('/users/me',{ method:"get" } )
-                setCurrentUser({current:apiUser})
-                return apiUser
+                const apiUser: StrapiUser = await client('users/me', {method: "get"})
+                setCurrentUser({current: apiUser})
+                return {current:apiUser}
             } catch (e) {
                 console.log('====================================');
                 console.log(e);
@@ -42,16 +45,16 @@ const token=getToken()
         return user
     }
 
-    const fetchAdmin = async (): Promise<StrapiUser> => {
-        const token=getToken()
+    const fetchAdmin = async (): Promise<React.MutableRefObject<StrapiUser>> => {
+        const token = getToken()
         if (token) {
             try {
-               const apiUser:StrapiAdminUser = await client('/admin/users/me',{ method:"get" } ,true)
+                const apiUser: StrapiAdminUser = await client('admin/users/me', {method: "get"}, true)
                 console.log('====================================');
-                console.log("apiUser admin",apiUser);
+                console.log("apiUser admin", apiUser);
                 console.log('====================================');
-                setCurrentUser({current:apiUser})
-                return apiUser
+                setCurrentUser({current: apiUser})
+                return {current:apiUser}
             } catch (e) {
                 console.log('====================================');
                 console.log(e);
@@ -74,7 +77,7 @@ const token=getToken()
     const login = async (data: StrapiAuthenticationData): Promise<StrapiAuthenticationResponse> => {
         setToken(null)
 
-        const { jwt }: StrapiAuthenticationResponse = await client('/auth/local', { method: 'post', data: data })
+        const {jwt}: StrapiAuthenticationResponse = await client('auth/local', {method: 'post', data: data})
 
         setToken(jwt)
 
@@ -94,18 +97,23 @@ const token=getToken()
      * @param  {string} data.password - The password of the user
      * @returns Promise<StrapiAuthenticationResponse>
      */
-    const adminLogin = async (data: StrapiAdminAuthenticationData): Promise<StrapiAuthenticationResponse> => {
+    const adminLogin = async (data: StrapiAdminAuthenticationData): Promise<StrapiAdminAuthenticationResponse> => {
         setToken(null)
 
-        const  response : StrapiAdminAuthenticationResponse = await client('/admin/login', { method: 'post', data: data },true)
+        const response: StrapiAdminAuthenticationResponse = await client('admin/login', {
+            method: 'post',
+            data: data
+        }, true)
 
         setToken(response.data.token)
 
         const user = await fetchAdmin()
 
         return {
-            user,
-            token:response.data.token
+            data:{
+                user,
+                token: response.data.token
+            }
         }
     }
 
@@ -130,7 +138,7 @@ const token=getToken()
     const register = async (data: StrapiRegistrationData): Promise<StrapiAuthenticationResponse> => {
         setToken(null)
 
-        const { jwt } = await client('/auth/local/register', { method: 'POST', data: data })
+        const {jwt} = await client('auth/local/register', {method: 'POST', data: data})
 
         setToken(jwt)
 
@@ -144,7 +152,7 @@ const token=getToken()
 
 
     /**
-     * Send an email to a user in order to reset his password
+     * Email a user in order to reset his password
      *
      * @param  {StrapiForgotPasswordData} data - Forgot password form: `email`
      * @param  {string} data.email - Email of the user who forgot his password
@@ -153,7 +161,7 @@ const token=getToken()
     const forgotPassword = async (data: StrapiForgotPasswordData): Promise<void> => {
         setToken(null)
 
-        await client('/auth/forgot-password', { method: 'POST', data: data })
+        await client('auth/forgot-password', {method: 'POST', data: data})
     }
 
     /**
@@ -168,7 +176,7 @@ const token=getToken()
     const resetPassword = async (data: StrapiResetPasswordData): Promise<StrapiAuthenticationResponse> => {
         setToken(null)
 
-        const { jwt }: StrapiAuthenticationResponse = await client('/auth/reset-password', { method: 'POST', data: data })
+        const {jwt}: StrapiAuthenticationResponse = await client('auth/reset-password', {method: 'POST', data: data})
 
         setToken(jwt)
 
@@ -190,7 +198,7 @@ const token=getToken()
      * @returns Promise<void>
      */
     const changePassword = async (data: StrapiChangePasswordData): Promise<void> => {
-        await client('/auth/change-password', { method: 'POST', data: data })
+        await client('auth/change-password', {method: 'POST', data: data})
     }
 
     /**
@@ -201,7 +209,7 @@ const token=getToken()
      * @returns Promise<void>
      */
     const sendEmailConfirmation = async (data: StrapiEmailConfirmationData): Promise<void> => {
-        await client('/auth/send-email-confirmation', { method: 'POST', data: data })
+        await client('auth/send-email-confirmation', {method: 'POST', data: data})
     }
 
     /**
@@ -224,7 +232,10 @@ const token=getToken()
     const authenticateProvider = async (provider: StrapiAuthProvider, access_token: string): Promise<StrapiAuthenticationResponse> => {
         setToken(null)
 
-        const { jwt }: StrapiAuthenticationResponse = await client(`/auth/${provider}/callback`, { method: 'GET', params: { access_token } })
+        const {jwt}: StrapiAuthenticationResponse = await client(`auth/${provider}/callback`, {
+            method: 'GET',
+            params: {access_token}
+        })
 
         setToken(jwt)
 
@@ -236,12 +247,14 @@ const token=getToken()
         }
     }
 
-    const renewToken =async ()=>{
-        const token=getToken()
-        const response = await client('/admin/renew-token', { method: 'post', data: {
-                token:token
-            } },true)
-        
+    const renewToken = async () => {
+        const token = getToken()
+        const response = await client('admin/renew-token', {
+            method: 'post', data: {
+                token: token
+            }
+        }, true)
+
         console.log('====================================');
         console.log(response);
         console.log('====================================');
